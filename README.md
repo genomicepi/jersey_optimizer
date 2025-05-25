@@ -4,7 +4,7 @@ This is a Shiny app to help assign jersey numbers to players based on their pref
 
 App available here: https://genomicepi.shinyapps.io/Jersey_Optimizer/
 
-<img width="1499" alt="image" src="https://github.com/user-attachments/assets/417c0bee-6de6-4879-9fba-e390dc2db81c" />
+<img width="1499" alt="image" src="https://github.com/user-attachments/assets/76cf5c84-d646-465a-aade-97d60d058b9a" />
 
 ## 🚀 Features
 
