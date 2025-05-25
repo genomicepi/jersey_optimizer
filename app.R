@@ -12,19 +12,26 @@ table_header_fg <- "#265d5a"  # dark teal text
 
 ui <- fluidPage(
   tags$head(
+    tags$title("Jersey Optimizer"),   # <-- Set browser tab title here
+    tags$link(rel = "shortcut icon", href = "jersey.png"),
     tags$style(HTML(sprintf("
       body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f7faf9; }
       h3 { color: %s; font-weight: 700; margin-top: 30px; }
       .btn-primary { background-color: %s; border-color: %s; color: %s; font-weight: 600; }
       .btn-primary:hover { background-color: #2a877d; border-color: #2a877d; }
-      .btn-danger { background-color: #dc3545; border-color: #dc3545; color: white; }
-      .btn-danger:hover { background-color: #b02a37; border-color: #b02a37; }
+      .btn-reset {
+        background-color: #f7c6ce; border-color: #f7c6ce; color: black;
+        font-weight: 600;
+      }
+      .btn-reset:hover {
+        background-color: #f3a5b0; border-color: #f3a5b0;
+      }
       .modal-header { background-color: %s; color: %s; }
       table.dataTable thead th { background-color: %s; color: %s; }
-      .step-label { 
-        font-weight: 700; 
-        font-size: 1.2em; 
-        margin-top: 20px; 
+      .step-label {
+        font-weight: 700;
+        font-size: 1.2em;
+        margin-top: 20px;
         color: %s;
       }
       .instruction-text {
@@ -52,18 +59,21 @@ ui <- fluidPage(
       div(class = "instruction-text", "Enter available jersey numbers separated by commas or ranges (e.g. 1-5,7,10). Click 'Submit Jerseys'."),
       textInput("jerseys", NULL, placeholder = "e.g. 1-5,7,10"),
       actionButton("submit_jerseys", "Submit Jerseys", class = "btn-primary"),
+      actionButton("reset_jerseys", "Reset Jerseys", class = "btn-reset"),
       
       hr(),
       
       div(class = "step-label", "Step 2: Add Players"),
       div(class = "instruction-text", "Click 'Add Player' and enter player name and their preferred jerseys."),
       actionButton("add_player", "➕ Add Player", class = "btn-primary"),
+      actionButton("reset_players", "Reset Players", class = "btn-reset"),
       
       hr(),
       
       div(class = "step-label", "Step 3: Optimize Assignments"),
       div(class = "instruction-text", "Click 'Optimize Assignments' to assign jerseys minimizing total preference rank."),
       actionButton("optimize", "Optimize Assignments", class = "btn-primary"),
+      actionButton("reset_assignments", "Reset Assignments", class = "btn-reset"),
       br(), br(),
       downloadButton("download_assignments", "Download Assignments", class = "btn-primary")
     ),
@@ -86,7 +96,8 @@ server <- function(input, output, session) {
       Player = character(),
       Choice1 = integer(), Choice2 = integer(),
       Choice3 = integer(), Choice4 = integer(), Choice5 = integer()
-    )
+    ),
+    assignment = NULL
   )
   
   parse_numbers <- function(txt) {
@@ -115,6 +126,12 @@ server <- function(input, output, session) {
       vals$jerseys <- js
       showNotification(paste("Jerseys set:", paste(js, collapse = ", ")), type = "message")
     }
+  })
+  
+  observeEvent(input$reset_jerseys, {
+    vals$jerseys <- NULL
+    updateTextInput(session, "jerseys", value = "")
+    showNotification("Jerseys reset.", type = "message")
   })
   
   observeEvent(input$add_player, {
@@ -161,6 +178,15 @@ server <- function(input, output, session) {
     )
     vals$prefs <- bind_rows(vals$prefs, new_row)
     removeModal()
+  })
+  
+  observeEvent(input$reset_players, {
+    vals$prefs <- tibble(
+      Player = character(),
+      Choice1 = integer(), Choice2 = integer(),
+      Choice3 = integer(), Choice4 = integer(), Choice5 = integer()
+    )
+    showNotification("Players reset.", type = "message")
   })
   
   output$player_table <- renderDT({
@@ -213,24 +239,26 @@ server <- function(input, output, session) {
     res <- tibble(
       Player = players,
       Assigned_Jersey = assigned_jerseys,
-      Rank_Choice = assigned_ranks
+      Rank = assigned_ranks
     )
     
     assignment_result(res)
   })
   
-  output$assignments <- renderTable({
-    req(assignment_result())
-    res <- assignment_result() %>%
-      rename(`Assigned Jersey` = Assigned_Jersey) %>%
-      mutate(Rank_Choice = round(Rank_Choice, 0))
-    res
+  observeEvent(input$reset_assignments, {
+    assignment_result(NULL)
+    showNotification("Assignments reset.", type = "message")
   })
   
+  output$assignments <- renderTable({
+    req(assignment_result())
+    assignment_result() %>% select(Player, Assigned_Jersey)
+  })
   
   output$total_score <- renderText({
     req(assignment_result())
-    paste("Total Score (sum of ranks):", sum(assignment_result()$Rank_Choice))
+    score <- sum(assignment_result()$Rank)
+    paste("Total sum of preference ranks:", score)
   })
   
   output$download_assignments <- downloadHandler(
@@ -239,9 +267,10 @@ server <- function(input, output, session) {
     },
     content = function(file) {
       req(assignment_result())
-      write_csv(assignment_result(), file)
+      write.csv(assignment_result(), file, row.names = FALSE)
     }
   )
 }
 
 shinyApp(ui, server)
+

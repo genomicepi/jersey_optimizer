@@ -1,0 +1,54 @@
+# R-specific
+.Rhistory
+.RData
+.Ruserdata
+.Rproj.user/
+.Rproj.user
+*.Rproj
+
+# macOS system files
+.DS_Store
+
+# Shiny app deployment metadata
+Jersey_Optimizer.dcf
+
+# RStudio files
+.Rhistory
+.Rapp.history
+.RData
+.Ruserdata
+
+# Shiny logs
+shinyapps.log
+
+# Packrat (if used, but keep packrat/ if you want reproducibility)
+packrat/lib*
+packrat/src*
+packrat/packrat.lock
+
+# renv (if used, but keep renv/activate.R and renv.lock if sharing environment)
+renv/library/
+renv/python/
+renv/staging/
+renv/cache/
+
+# HTML preview output
+*.utf8.md
+*.knit.md
+
+# VSCode settings
+.vscode/
+
+# Temporary files
+*.swp
+*.tmp
+*.bak
+*~
+
+# R markdown cache
+*_cache/
+*.nb.html
+
+# GitHub Pages or other output dirs (if using)
+docs/
+site/
